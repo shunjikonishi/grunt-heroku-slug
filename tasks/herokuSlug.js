@@ -51,6 +51,9 @@ grunt.log.writeln("fireEvent: " + name + ", " + value);
 				if (value === "done") {
 					release(appInfo, appDir + ".tar.gz");
 				}
+				break;
+			case "release":
+				grunt.log.writeln("Release: " + value);
 				finish();
 				break;
 		}
@@ -68,15 +71,12 @@ function apikey() {
 }
 function tarball(appDir) {
 	grunt.log.writeln("Compressing...");
-	/*
 	new Targz().compress(appDir, appDir + ".tar.gz", function(err) {
 		if (err) {
 			grunt.fail.warn(err);
 		}
 		emitter.emit(TASK_NAME, "tarball", "done");
 	});
-	*/
-	emitter.emit(TASK_NAME, "tarball", "done");
 }
 
 function extract(appDir) {
@@ -175,14 +175,20 @@ console.log("upload4: " + fs.statSync(tarball).size);
 	}, function(res) {
 		var status = res.statusCode;
 console.log("status: " + status);
+console.log("headers: " + JSON.stringify(res.headers));
+		res.on("data", function(data) {
+			console.log("response: " + data);
+		});
 		if (status === 200) {
 			release(appInfo, slugInfo);
+		} else {
+			grunt.fail.warn("Failure upload slug: " + status);
 		}
 	});
 	var is = fs.createReadStream(tarball), 
 		cnt = 0;
 	is.on("data", function(data) {
-console.log("data: " + ++cnt);
+console.log("data: " + (++cnt));
 		req.write(data);
 	});
 	is.on("end", function(data) {
@@ -192,7 +198,34 @@ console.log("end: " + cnt);
 }
 
 function release(appInfo, slugInfo) {
+	grunt.log.writeln("Release...");
+	var bodyJson = {
+			"slug" : slugInfo.id
+		},
+		body = JSON.stringify(bodyJson);
 
+	var req = https.request({
+		"headers" : {
+			"Content-Type" : "application/json",
+			"Accept" : "application/vnd.heroku+json; version=3",
+			"Authorization" : appInfo.auth,
+			"Content-Length" : body.length
+		},
+		"method" : "POST",
+		"host" : "api.heroku.com",
+		"path" : "/apps/" + appInfo.appname + "/releases"
+	}, function(res) {
+		var status = res.statusCode;
+		res.on("data", function(data) {
+			if (status === 201) {
+				emitter.emit(TASK_NAME,"release", data);
+			} else {
+				grunt.fail.warn("Failure release slug: " + data);
+			}
+		});
+	});
+	req.write(body);
+	req.end();
 }
 
 grunt.registerMultiTask(TASK_NAME, 'Direct slug release to heroku', function () {
