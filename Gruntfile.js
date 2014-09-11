@@ -26,9 +26,9 @@ module.exports = function(grunt) {
         app: {
             files: [{
                 expand: true,
-                cwd: "../report2/target",
+                cwd: "../report2/target/universal/stage",
                 src: "**/*",
-                dest: "heroku/app/target"
+                dest: "heroku/app/stage"
             }]
         }
     },
@@ -60,7 +60,7 @@ module.exports = function(grunt) {
           "jdk_version" : "1.7"
         },
         "process_types" : {
-            "web" : "target/universal/stage/bin/report2 -Dhttp.port=$PORT"
+            "web" : "stage/bin/report2 -Dhttp.port=$PORT"
         }
       }
     },
@@ -82,8 +82,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-nodeunit');
   grunt.loadNpmTasks('grunt-contrib-watch');
 
-//  grunt.registerTask('test', ['clean:target', 'copy:app', 'herokuSlug', 'nodeunit']);
-  grunt.registerTask('test', ['herokuSlug', 'nodeunit']);
+  grunt.registerTask('test', ['clean:target', 'copy:app', 'herokuSlug', 'nodeunit']);
+//  grunt.registerTask('test', ['herokuSlug', 'nodeunit']);
 
   // By default, lint and run all tests.
   grunt.registerTask('default', ['jshint', 'test']);

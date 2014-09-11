@@ -27,7 +27,6 @@ function StatusCtrl(appInfo, appDir, done) {
 		},
 		startTime = new Date().getTime();
 	this.fireEvent = function(name, value) {
-grunt.log.writeln("fireEvent: " + name + ", " + value);
 		status[name] = value;
 		switch (name) {
 			case "jdk":
@@ -155,46 +154,52 @@ function createSlug(appInfo, tarball) {
 	req.end();
 }
 function upload(appInfo, tarball, slugInfo) {
+	function progress() {
+		if (req && uploading) {
+			console.log("Uploaded: " + req.connection._bytesDispatched);
+			setTimeout(progress, 2000);
+		}
+	}
 	grunt.log.writeln("Uploading...");
 	var url = URL.parse(slugInfo.blob.url),
 		host = url.host,
-		path = url.path;
-console.log("upload0: " + JSON.stringify(slugInfo));
-console.log("upload1: " + slugInfo.blob.url);
-console.log("upload2: " + host);
-console.log("upload3: " + path);
-console.log("upload4: " + fs.statSync(tarball).size);
+		path = url.path,
+		uploading = true;
 	var req = https.request({
 		"headers" : {
-			"Content-Type" : "application/octet-stream",
-			"Content-Length" : fs.statSync(tarball).size
+			"Content-Length" :  fs.statSync(tarball).size,
+			"Content-Type" : ""
 		},
 		"method" : "PUT",
 		"host" : host,
 		"path" : path
 	}, function(res) {
 		var status = res.statusCode;
-console.log("status: " + status);
-console.log("headers: " + JSON.stringify(res.headers));
 		res.on("data", function(data) {
 			console.log("response: " + data);
 		});
-		if (status === 200) {
-			release(appInfo, slugInfo);
-		} else {
-			grunt.fail.warn("Failure upload slug: " + status);
-		}
+		res.on("end", function() {
+			uploading = false;
+			if (status === 200) {
+				release(appInfo, slugInfo);
+			} else {
+				grunt.fail.warn("Failure upload slug: " + status);
+			}
+		});
 	});
 	var is = fs.createReadStream(tarball), 
 		cnt = 0;
 	is.on("data", function(data) {
-console.log("data: " + (++cnt));
+		cnt++;
 		req.write(data);
 	});
 	is.on("end", function(data) {
-console.log("end: " + cnt);
 		req.end();
 	});
+	for (var key in req.connection) {
+		console.log(key + ": " + req.connection[key]);
+	}
+	setTimeout(progress, 2000);
 }
 
 function release(appInfo, slugInfo) {
