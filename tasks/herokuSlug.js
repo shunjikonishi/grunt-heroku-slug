@@ -70,12 +70,20 @@ function apikey() {
 }
 function tarball(appDir) {
 	grunt.log.writeln("Compressing...");
+	exec("tar czfv " + appDir + ".tar.gz " + appDir, function(err, stdout, stderr) {
+		if (err) {
+			grunt.fail.warn(err);
+		}
+		emitter.emit(TASK_NAME, "tarball", "done");
+	});
+	/*
 	new Targz().compress(appDir, appDir + ".tar.gz", function(err) {
 		if (err) {
 			grunt.fail.warn(err);
 		}
 		emitter.emit(TASK_NAME, "tarball", "done");
 	});
+	*/
 }
 
 function extract(appDir) {
@@ -154,20 +162,23 @@ function createSlug(appInfo, tarball) {
 	req.end();
 }
 function upload(appInfo, tarball, slugInfo) {
+	var temp = 1;
 	function progress() {
 		if (req && uploading) {
-			console.log("Uploaded: " + req.connection._bytesDispatched);
+			temp++;
+			process.stdout.write("Uploaded: " + req.connection.bytesWritten + "\r");
 			setTimeout(progress, 2000);
 		}
 	}
-	grunt.log.writeln("Uploading...");
 	var url = URL.parse(slugInfo.blob.url),
 		host = url.host,
 		path = url.path,
+		size = fs.statSync(tarball).size
 		uploading = true;
+	grunt.log.writeln("Uploading " + size + "bytes...");
 	var req = https.request({
 		"headers" : {
-			"Content-Length" :  fs.statSync(tarball).size,
+			"Content-Length" : size,
 			"Content-Type" : ""
 		},
 		"method" : "PUT",
