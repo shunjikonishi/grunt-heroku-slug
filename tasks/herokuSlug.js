@@ -31,7 +31,7 @@ function StatusCtrl(appInfo, appDir, done) {
 		switch (name) {
 			case "jdk":
 				if (value === "prepared") {
-					tarball(appDir);
+					tarball(appDir, appInfo.tar);
 				} else if (value === "extract") {
 					extract(appDir);
 				}
@@ -68,22 +68,21 @@ function apikey() {
 		emitter.emit(TASK_NAME, "apikey", stdout);
 	});
 }
-function tarball(appDir) {
+function tarball(appDir, tarCommand) {
+	var dir = appDir,
+		cwd = null,
+		idx = dir.lastIndexOf("/");
+	if (idx !== -1) {
+		cwd = dir.substring(0, idx);
+		dir = dir.substring(idx + 1);
+	}
 	grunt.log.writeln("Compressing...");
-	exec("tar czfv " + appDir + ".tar.gz " + appDir, function(err, stdout, stderr) {
+	exec(tarCommand + " czfv ./" + dir + ".tar.gz " + dir, { cwd: cwd}, function(err, stdout, stderr) {
 		if (err) {
 			grunt.fail.warn(err);
 		}
 		emitter.emit(TASK_NAME, "tarball", "done");
 	});
-	/*
-	new Targz().compress(appDir, appDir + ".tar.gz", function(err) {
-		if (err) {
-			grunt.fail.warn(err);
-		}
-		emitter.emit(TASK_NAME, "tarball", "done");
-	});
-	*/
 }
 
 function extract(appDir) {
@@ -249,7 +248,8 @@ grunt.registerMultiTask(TASK_NAME, 'Direct slug release to heroku', function () 
 		config = grunt.config(TASK_NAME)[appname],
 		dir = config.targetDir || "heroku",
 		appDir = dir + "/app",
-		process_types = config.process_types;
+		process_types = config.process_types,
+		tar = config.tar || "tar";
 
 	grunt.log.writeln(TASK_NAME + ": Slug release start - " + appname);
 	if (!process_types) {
@@ -258,7 +258,8 @@ grunt.registerMultiTask(TASK_NAME, 'Direct slug release to heroku', function () 
 
 	var statusCtrl = new StatusCtrl({
 			"appname" : appname,
-			"process_types" : process_types
+			"process_types" : process_types,
+			"tar" : tar
 		}, appDir, this.async());
 
 	emitter.removeAllListeners(TASK_NAME);

@@ -48,8 +48,8 @@ module.exports = function(grunt) {
         "heroku"
       ],
       target: [
-        "heroku/app/target/**.*",
-        "heroku/app/target"
+        "heroku/app/stage/**.*",
+        "heroku/app/stage"
       ]
     },
 
@@ -59,6 +59,7 @@ module.exports = function(grunt) {
         "env" : {
           "jdk_version" : "1.7"
         },
+        "tar" : "gtar",
         "process_types" : {
             "web" : "stage/bin/report2 -Dhttp.port=$PORT"
         }
