@@ -31,6 +31,7 @@ function StatusCtrl(appInfo, appDir, done) {
 		switch (name) {
 			case "jdk":
 				if (value === "prepared") {
+console.log("test1: ", appInfo.tar);
 					tarball(appDir, appInfo.tar);
 				} else if (value === "extract") {
 					extract(appDir);
@@ -77,7 +78,7 @@ function tarball(appDir, tarCommand) {
 		dir = dir.substring(idx + 1);
 	}
 	grunt.log.writeln("Compressing...");
-	exec(tarCommand + " czfv ./" + dir + ".tar.gz " + dir, { cwd: cwd}, function(err, stdout, stderr) {
+	exec(tarCommand + " czfv " + dir + ".tar.gz ./*", { cwd: cwd}, function(err, stdout, stderr) {
 		if (err) {
 			grunt.fail.warn(err);
 		}
@@ -279,6 +280,6 @@ grunt.registerMultiTask(TASK_NAME, 'Direct slug release to heroku', function () 
 		}
 	}
 	if (!statusCtrl.status.jdk) {
-		tarball(appDir);
+		tarball(appDir, tar);
 	}
 });
