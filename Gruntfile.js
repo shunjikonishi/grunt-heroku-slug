@@ -24,12 +24,15 @@ module.exports = function(grunt) {
     },
     copy: {
         app: {
-            files: [{
-                expand: true,
-                cwd: "../report2/target/universal/stage",
-                src: "**/*",
-                dest: "heroku/app/stage"
-            }]
+          files: [{
+              expand: true,
+              cwd: "../report2/target/universal/stage",
+              src: "**/*",
+              dest: "heroku/app/stage"
+          }],
+          options: {
+            mode: true
+          }
         }
     },
     watch: {
