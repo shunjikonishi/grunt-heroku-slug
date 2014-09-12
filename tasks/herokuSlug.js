@@ -13,6 +13,9 @@ var TASK_NAME = "herokuSlug",
 		"1.7" : "http://heroku-jdk.s3.amazonaws.com/openjdk1.7.0_45.tar.gz"
 	};
 
+function isMacOS() {
+	return process.platform === "darwin";
+}
 function StatusCtrl(appInfo, appDir, done) {
 	function finish() {
 		grunt.log.writeln("Finished: " + (new Date().getTime() - startTime) + "ms.");
@@ -31,7 +34,6 @@ function StatusCtrl(appInfo, appDir, done) {
 		switch (name) {
 			case "jdk":
 				if (value === "prepared") {
-console.log("test1: ", appInfo.tar);
 					tarball(appDir, appInfo.tar);
 				} else if (value === "extract") {
 					extract(appDir);
@@ -250,7 +252,7 @@ grunt.registerMultiTask(TASK_NAME, 'Direct slug release to heroku', function () 
 		dir = config.targetDir || "heroku",
 		appDir = dir + "/app",
 		process_types = config.process_types,
-		tar = config.tar || "tar";
+		tar = config.tar || isMacOS() ? "gtar" : "tar";
 
 	grunt.log.writeln(TASK_NAME + ": Slug release start - " + appname);
 	if (!process_types) {

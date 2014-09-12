@@ -57,9 +57,8 @@ module.exports = function(grunt) {
     herokuSlug: {
       "slug-push-test" : {
         "env" : {
-          "jdk_version" : "1.7"
+          "jdk_version" : "1.8"
         },
-        "tar" : "gtar",
         "process_types" : {
             "web" : "stage/bin/report2 -Dhttp.port=$PORT"
         }
